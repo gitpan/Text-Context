@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Context.
 
+3.4  Sat May  1 11:57:17 2004
+    - Add dependency
+
 3.3  Mon Oct 20 16:38:26 2003
     - fixed a bug where terms would be marked-up overzealously.
 

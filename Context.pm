@@ -2,7 +2,7 @@ package Text::Context;
 use strict;
 use warnings;
 
-our $VERSION = "3.3";
+our $VERSION = "3.4";
 
 =head1 NAME
 

@@ -4,5 +4,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'		=> 'Text::Context',
     'VERSION_FROM'	=> 'Context.pm', # finds $VERSION
-    'PREREQ_PM'		=> {}, # e.g., Module::Name => 1.1
+    'PREREQ_PM'		=> {
+        Text::Context::EitherSide => 1.1
+    }, # e.g., Module::Name => 1.1
 );
