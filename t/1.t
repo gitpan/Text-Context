@@ -31,8 +31,8 @@ my $expected = [
     "... I\'m just quoting Phil Wadler, who recently (at the"
         . " School of Advanced FP in Oxford, England, August) in his "
         . "lecture about XQuery said that",
-    [ 'Wadler', 26,  32 ],
-    [ 'XQuery', 126, 132 ]
+    [ 'wadler', 26,  32 ],
+    [ 'xquery', 126, 132 ]
 ];
 
 is_deeply($snippet->offsets, $expected,
@@ -54,7 +54,7 @@ isnt($snippet->offsets, undef, "Changing keywords uncaches offsets");
 $snippet->keywords("Wadler", "Foobar");
 my $expected = [
     "... I'm just quoting Phil Wadler, who recently (at the School of Advanced",
-    [ 'Wadler', 26, 32 ]
+    [ 'wadler', 26, 32 ]
 ];
 is_deeply($snippet->offsets, $expected,
     "Sensible results with one not-found keyword");
@@ -100,8 +100,8 @@ is_deeply($snippet->offsets, $expected, "A phrase works");
 $snippet->keywords("functional", "language");
 $expected = [
     '... > >While XSLT is considered to be a functional language by experts in',
+    [ 'functional', 40, 50 ],
     [ 'language',   51, 59 ],
-    [ 'functional', 40, 50 ]
 ];
 is_deeply($snippet->offsets, $expected,
     "A multiply-occurring set of keywords finds the first match");

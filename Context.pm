@@ -8,7 +8,7 @@ use constant DEFAULT_HTML_HIGHLIGHT_END   => '</span class="quoted">';
 
 use HTML::Entities;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 
 =head1 NAME
 
@@ -28,7 +28,7 @@ Text::Context - Handle highlighting search result context snippets
 
 =head1 DESCRIPTION
 
-Given a text message object and some search terms, produces an object
+Given a piece of text and some search terms, produces an object
 which locates the search terms in the message, extracts a reasonable-length
 string containing all the search terms, and optionally dumps the string out
 as HTML text with the search terms highlighted in bold.
@@ -113,7 +113,7 @@ sub _locate_keywords {
 	# message, followed by an array reference of the keywords in-order.
 
 	my @msg = @{ shift @_ };
-	my %to_find = map { $_ => 1 } @_;
+	my %to_find = map { lc $_ => $_ } @_;
 	my @in_order;
 	my @text;
 
@@ -122,15 +122,16 @@ sub _locate_keywords {
 
 		my $line = $msg[$line_no];
 		chomp $line;
+        my $lline = lc $line;
 
 		for my $word (keys %to_find) {
-			if (index($line, $word) > -1) {    # (Faster than regex)
+			if (index($lline, $word) > -1) {    # (Faster than regex)
 				if ($text[$line_no]) {
 
 					# We have already found one word on this line.
-					push @{ $text[$line_no] }, $word;
+					push @{ $text[$line_no] }, $to_find{$word};
 				} else {
-					$text[$line_no] = [ $line, $word ];
+					$text[$line_no] = [ $line, $to_find{$word} ];
 				}
 				push @in_order, $word;
 				delete $to_find{$word};
@@ -177,7 +178,7 @@ sub _shorten {
 	# First, let's see if we can slim it down by *just* trying to find
 	# the words (with maybe one word either side)
 	my $pat = join ".?", map quotemeta, @words;
-	$line =~ /((\b\w+\b)?.*?$pat.*?(\b\w+\b)?)/sm;
+	$line =~ /((\b\w+\b)?.*?$pat.*?(\b\w+\b)?)/smi;
 	die "Assertion failed! We found it once, but now it is gone! "
 		. "/$pat/ in q|$line|"
 		unless $1;
@@ -201,16 +202,20 @@ sub _make_offsets {
 	# the offsets.
 
 	my $string   = shift;
+    my $lstring  = lc $string;
 	my @in_order = @_;
-	my @ret      = $string;
+	my @ret;
 
 	# Now calculate the offsets.
 	for (@in_order) {
-		my $pos = index($string, $_);
+		my $pos = index($lstring, lc $_);
 		push @ret, [ $_, $pos, $pos + length ];
 	}
 
-	return \@ret;
+    # But wait - they're not quite in order, because if the same 
+    # line contains two search terms, the one given first will win.
+
+	return [$string, sort { $a->[1] <=> $b->[1] } @ret ];
 }
 
 =head2 as_html([ start => "<some tag>", end => "<some end tag>" ])
@@ -238,7 +243,10 @@ sub as_html {
 	my $out;
 	for (@offsets) {
 		$out .= encode_entities(substr($string, $pos, $_->[1] - $pos));
-		$out .= "$start$_->[0]$end";
+        # Case may differ, so we can't use the original keyword.
+        $out .= $start;
+        $out .= encode_entities(substr($string, $_->[1], length $_->[0]));
+        $out .= $end;
 		$pos = $_->[2];
 	}
 	$out .= encode_entities(substr($string, $pos));
