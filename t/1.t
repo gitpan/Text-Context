@@ -27,7 +27,7 @@ is_deeply([map{$_->{order}}@paras],[0,2],"We selected the correct paras");
 is($paras[0]->marked_up, 'This is a <span class="quoted">test</span>',
 "Can mark self up");
 
-my $s = Text::Context->new("This is a test\n\nAnd   so is this.\n\nbut this has more words than the others", "TeSt",
+$s = Text::Context->new("This is a test\n\nAnd   so is this.\n\nbut this has more words than the others", "TeSt",
 "ThiS", "more  words");
 is($s->as_text, "This is a test ... but this has more words than the others", 
 "Simple test passed");

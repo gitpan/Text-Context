@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Context.
 
+3.1  Mon Oct 20 15:01:22 2003
+    - Handle entity translation during to_html
+
 3.0  Tue Apr  1 16:06:46 2003
 	- This is a complete rewrite, although the interface is mainly
       the same.

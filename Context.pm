@@ -2,7 +2,7 @@ package Text::Context;
 use strict;
 use warnings;
 
-our $VERSION = "3.0";
+our $VERSION = "3.1";
 
 =head1 NAME
 
@@ -221,6 +221,7 @@ sub as_html {
 }
 
 package Text::Context::Para;
+use HTML::Entities;
 use constant DEFAULT_START_TAG => '<span class="quoted">';
 use constant DEFAULT_END_TAG   => "</span>";
 use Text::Context::EitherSide qw(get_context);
@@ -263,10 +264,19 @@ sub marked_up {
     my $start_tag = shift || DEFAULT_START_TAG;
     my $end_tag   = shift || DEFAULT_END_TAG;
     my $content   = $self->as_text;
-    for my $word (@{$self->{marked_words}}) {
-        $content =~ s/\b(\Q$word\E)\b/$start_tag$1$end_tag/i
+    # Need to escape entities in here.
+    my $re = join "|", map { qr/\Q$_\E/i } @{$self->{marked_words}};
+    my $re2 = qr/\b($re)\b/i;
+    my @fragments = split /$re2/i, $content;
+    my $output;
+    for my $orig_frag (@fragments) {
+        my $frag = encode_entities($orig_frag);
+        if ($orig_frag =~ /$re/i) {
+            $frag = $start_tag.$frag.$end_tag;
+        }
+        $output .= $frag;
     }
-    return $content;
+    return $output;
 }
 
 =head1 COPYRIGHT
