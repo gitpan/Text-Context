@@ -2,7 +2,7 @@ package Text::Context;
 use strict;
 use warnings;
 
-our $VERSION = "3.2";
+our $VERSION = "3.3";
 
 =head1 NAME
 
@@ -271,7 +271,7 @@ sub marked_up {
     my $output;
     for my $orig_frag (@fragments) {
         my $frag = encode_entities($orig_frag);
-        if ($orig_frag =~ /$re/i) {
+        if ($orig_frag =~ /$re2/i) {
             $frag = $start_tag.$frag.$end_tag;
         }
         $output .= $frag;

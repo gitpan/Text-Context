@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Context.
 
+3.3  Mon Oct 20 16:38:26 2003
+    - fixed a bug where terms would be marked-up overzealously.
+
 3.2  Mon Oct 20 15:31:43 2003
     - scoretable should not barf when there are no scores!
 
