@@ -1,9 +1,6 @@
 Changes
-ChangeLog
 Context.pm
-Makefile.PL
 MANIFEST
-README
+Makefile.PL
 t/1.t
 t/2.t
-t/3.t

@@ -1,185 +1,33 @@
-use strict;
-use warnings;
+use Test::More tests => 15;
+use_ok "Text::Context";
 
-use Test::More tests => 20;
-use Text::Context;
+# Unit tests for the Ruby port
+my $s = Text::Context->new("This is a test\n\nAnd   so is this.\n\nbut this has more words than the others", "TeSt",
+"ThiS", "more  words");
 
-undef $/; my $text = <DATA>;
+isa_ok($s, "Text::Context");
+is_deeply([$s->keywords], ["test", "this", "more words"], 
+    "Keywords downcase properly");
 
-{
-my $snippet = Text::Context->new($text);
-isa_ok($snippet, "Text::Context");
+$s->prepare_text;
+my @things = @{$s->{text_a}};
+is @things, 3, "Proper number of paras";
+for (@things) { isa_ok $_, "Text::Context::Para" }
+is $things[0]->as_text, "This is a test", "Text maintained OK";
 
-$snippet->keywords(qw(Wadler XQuery));
-is(join (" ", $snippet->keywords), "wadler xquery", 
-    "Keywords can be set (and are l/c'ed)");
-}
+for (@things) { $s->score_para($_) }
+is $things[0]->{final_score}, 8, "Score is OK (first para)";
+is_deeply [$things[0]->best_keywords], ["test", "this"], "Keywords OK";
+is $things[-1]->{final_score}, 16, "Score is OK (last para)";
 
-{
-my $snippet = Text::Context->new($text, "Wadler", "XQuery");
-isa_ok($snippet, "Text::Context");
-is(
-    join (" ", $snippet->keywords),
-    "wadler xquery",
-    "Keywords can be set in constructor and retrieved (and are l/c'ed)"
-);
-}
+$s->get_appropriate_paras;
+my @paras = @{$s->{app_paras}};
+is(@paras,2, "We selected two paragraphs");
+is_deeply([map{$_->{order}}@paras],[0,2],"We selected the correct paras");
+is($paras[0]->marked_up, 'This is a <span class="quoted">test</span>',
+"Can mark self up");
 
-{
-my $snippet = Text::Context->new($text, "Wadler", "XQuery");
-
-my $expected = [
-    [ 'wadler', 26,  32 ],
-    [ 'xquery', 126, 132 ]
-];
-
-is_deeply($snippet->offsets, $expected,
-    "Simple context string with located offsets");
-is_deeply($snippet->offsets, $expected, "Offset caching works");
-
-$snippet = Text::Context->new($text, "XQuery", "Wadler");
-is_deeply($snippet->offsets, $expected,
-    "Order of keywords is not significant");
-$expected = 
-    "... I\'m just quoting Phil Wadler, who recently (at the"
-        . " School of Advanced FP in Oxford, England, August) in his "
-        . "lecture about XQuery said that",
-is($snippet->as_text, $expected, "...and the text is correct");
-}
-
-{
-my $snippet = Text::Context->new($text);
-is($snippet->offsets, undef, "We get no offsets with no keywords");
-
-$snippet->keywords("Wadler", "XQuery");
-isnt($snippet->offsets, undef, "Changing keywords uncaches offsets");
-
-$snippet->keywords("Wadler", "Foobar");
-my $expected = [
-    [ 'wadler', 26, 32 ]
-];
-is_deeply($snippet->offsets, $expected,
-    "Sensible results with one not-found keyword");
-
-$snippet->keywords("Foobar", "Wadler");
-is_deeply($snippet->offsets, $expected, "And order is still not important");
-
-$snippet->keywords("Foobar", "Bazquux");
-is($snippet->offsets, undef,
-    "But still no offsets with zero keywords found");
-
-}
-
-{
-my $snippet = Text::Context->new($text, "Wadler", "XQuery");
-
-my $expected =
-    "... I'm just quoting Phil <B>Wadler</B>, who recently (at the "
-    . "School of Advanced FP in Oxford, England, August) in his lecture "
-    . "about <B>XQuery</B> said that";
-
-is($snippet->as_html(start => "<B>", end => "</B>"),
-    $expected, "as_html can take custom delimiters");
-
-is($snippet->as_html(start => "<B>", end => "</B>"),
-    $expected, "We don't modify the offsets data structure (any more)");
-
-$expected =~ s/B>/span class="quoted">/g;
-
-is($snippet->as_html(), $expected,
-    "as_html uses span as default delimiters");
-}
-
-{
-my $snippet = Text::Context->new($text, "functional language");
-
-my $expected = [
-    [ 'functional language', 40, 59 ]
-];
-
-is_deeply($snippet->offsets, $expected, "A phrase works");
-is($snippet->as_text, 
-'... > >While XSLT is considered to be a functional language by experts in',
-"and the text is correct",
-);
-$snippet->keywords("functional", "language");
-$expected = [
-    [ 'functional', 40, 50 ],
-    [ 'language',   51, 59 ],
-];
-is_deeply($snippet->offsets, $expected,
-    "A multiply-occurring set of keywords finds the first match");
-is($snippet->as_text, 
-'... > >While XSLT is considered to be a functional language by experts in',
-"and the text is correct",
-);
-}
-
-1;
-
-__DATA__
-
---- bryan wrote:
-> 
-> >While XSLT is considered to be a functional language by experts in
-> this 
-> >field, it is definitely not a very nice representative of this class
-> of 
-> >programming languages. 
-> 
-> OOOOH that's a baaad thing you said. :) 
-
-I'm just quoting Phil Wadler, who recently (at the School of Advanced
-FP in Oxford, England, August) in his lecture about XQuery said that
-"XSLT is probably the most used functional language and the ugliest
-one".
-
-
-> 
-> Anyway, it seems to me that you prefer Haskell out of the various
-> functional languages, do you have a particular reason for this? I
-> have
-> problems with Haskell, I've tried and I've tried but it's frankly
-> quite
-> hard for me to follow programs written in Haskell once they get
-> beyond
-> a
-> couple pages when printed, for functional languages I prefer Lisp and
-> Erlang. Especially Erlang. 
-> 
-> So anyway what do you like especially about Haskell? 
-
-
-Strong typing, polymorphic types, type classes
-
-Higher order functions
-
-Huge expressiveness
-
-Lazy evaluation + pattern matching
-
-The (built-in support for the) very precise (monadic) approach to
-encapsulating operations with side effects.
-
-
-They even joke that once you have specified the types correctly, then
-the solution just starts working... :o)  and in reality quite often
-this is really the case.
-
-But I'm not comparing Haskell to other languages, just saying that I
-like it.
-
-
-
-=====
-Cheers,
-
-Dimitre Novatchev.
-http://fxsl.sourceforge.net/ -- the home of FXSL
-
-__________________________________________________
-Do you Yahoo!?
-Faith Hill - Exclusive Performances, Videos & More
-http://faith.yahoo.com
-
- XSL-List info and archive:  http://www.mulberrytech.com/xsl/xsl-list
+my $s = Text::Context->new("This is a test\n\nAnd   so is this.\n\nbut this has more words than the others", "TeSt",
+"ThiS", "more  words");
+is($s->as_text, "This is a test ... but this has more words than the others", 
+"Simple test passed");
