@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 17;
+use Test::More tests => 20;
 use Text::Context;
 
 undef $/; my $text = <DATA>;
@@ -11,7 +11,8 @@ my $snippet = Text::Context->new($text);
 isa_ok($snippet, "Text::Context");
 
 $snippet->keywords(qw(Wadler XQuery));
-is(join (" ", $snippet->keywords), "Wadler XQuery", "Keywords can be set");
+is(join (" ", $snippet->keywords), "wadler xquery", 
+    "Keywords can be set (and are l/c'ed)");
 }
 
 {
@@ -19,8 +20,8 @@ my $snippet = Text::Context->new($text, "Wadler", "XQuery");
 isa_ok($snippet, "Text::Context");
 is(
     join (" ", $snippet->keywords),
-    "Wadler XQuery",
-    "Keywords can be set in constructor and retrieved"
+    "wadler xquery",
+    "Keywords can be set in constructor and retrieved (and are l/c'ed)"
 );
 }
 
@@ -28,9 +29,6 @@ is(
 my $snippet = Text::Context->new($text, "Wadler", "XQuery");
 
 my $expected = [
-    "... I\'m just quoting Phil Wadler, who recently (at the"
-        . " School of Advanced FP in Oxford, England, August) in his "
-        . "lecture about XQuery said that",
     [ 'wadler', 26,  32 ],
     [ 'xquery', 126, 132 ]
 ];
@@ -42,6 +40,11 @@ is_deeply($snippet->offsets, $expected, "Offset caching works");
 $snippet = Text::Context->new($text, "XQuery", "Wadler");
 is_deeply($snippet->offsets, $expected,
     "Order of keywords is not significant");
+$expected = 
+    "... I\'m just quoting Phil Wadler, who recently (at the"
+        . " School of Advanced FP in Oxford, England, August) in his "
+        . "lecture about XQuery said that",
+is($snippet->as_text, $expected, "...and the text is correct");
 }
 
 {
@@ -53,7 +56,6 @@ isnt($snippet->offsets, undef, "Changing keywords uncaches offsets");
 
 $snippet->keywords("Wadler", "Foobar");
 my $expected = [
-    "... I'm just quoting Phil Wadler, who recently (at the School of Advanced",
     [ 'wadler', 26, 32 ]
 ];
 is_deeply($snippet->offsets, $expected,
@@ -92,19 +94,25 @@ is($snippet->as_html(), $expected,
 my $snippet = Text::Context->new($text, "functional language");
 
 my $expected = [
-    '... > >While XSLT is considered to be a functional language by experts in',
     [ 'functional language', 40, 59 ]
 ];
 
 is_deeply($snippet->offsets, $expected, "A phrase works");
+is($snippet->as_text, 
+'... > >While XSLT is considered to be a functional language by experts in',
+"and the text is correct",
+);
 $snippet->keywords("functional", "language");
 $expected = [
-    '... > >While XSLT is considered to be a functional language by experts in',
     [ 'functional', 40, 50 ],
     [ 'language',   51, 59 ],
 ];
 is_deeply($snippet->offsets, $expected,
     "A multiply-occurring set of keywords finds the first match");
+is($snippet->as_text, 
+'... > >While XSLT is considered to be a functional language by experts in',
+"and the text is correct",
+);
 }
 
 1;

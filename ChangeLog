@@ -1,0 +1,18 @@
+2002-12-11 12:24  simon
+
+	* Context.pm, Makefile.PL, t/1.t, t/3.t: This is 2.0; change
+	offsets->[0] to be as_text.
+
+2002-12-11 10:45  simon
+
+	* Context.pm: That assertion is Not Helpful.
+
+2002-12-09 18:49  simon
+
+	* Context.pm, t/1.t: Clarify casing strategy.
+
+2002-12-09 16:45  simon
+
+	* Changes, Context.pm, MANIFEST, Makefile.PL, README, t/1.t, t/2.t,
+	t/3.t: Bring 1.2 under version control.
+

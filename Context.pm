@@ -8,7 +8,7 @@ use constant DEFAULT_HTML_HIGHLIGHT_END   => '</span class="quoted">';
 
 use HTML::Entities;
 
-our $VERSION = "1.2";
+our $VERSION = "2.0";
 
 =head1 NAME
 
@@ -36,7 +36,6 @@ as HTML text with the search terms highlighted in bold.
 =cut
 
 use strict;
-use warnings;
 
 =head2 new
 
@@ -49,14 +48,14 @@ sub new {
 	my ($self, $text, @keywords) = @_;
 	bless {
 		text     => $text,
-		keywords => [@keywords]
+        keywords => [map lc,@keywords]
 	}, $self;
-
 }
 
 =head2 keywords
 
-Accessor method to get/set keywords
+Accessor method to get/set keywords. As the context search is done
+case-insensitively, the keywords will be lower-cased.
 
 =cut
 
@@ -64,25 +63,48 @@ sub keywords {
 	my $self = shift;
 	if (@_) {
 		delete $self->{offsets};    # Uncache
-		$self->{keywords} = [@_];
+        delete $self->{snippet};
+		$self->{keywords} = [map lc, @_];
 	}
 	@{ $self->{keywords} };
 }
 
+=head2 as_text
+
+Calculates a "representative" string which contains
+the given search terms. If there's lots and lots of context between the
+terms, it's replaced with an ellipsis.
+
+=cut
+
+sub as_text {
+    my $self = shift;
+    return $self->{snippet} if exists $self->{snippet};
+
+	my @msg = split /\n/, $self->{text};
+
+	my ($sparse, $in_order) = _locate_keywords(\@msg, $self->keywords);
+
+	return undef unless @$in_order;    # Didn't find any keywords at all.
+
+    $self->{in_order} = $in_order;
+	return $self->{snippet} = _present($sparse, @$in_order);
+}
+
+
 =head2 offsets
 
 Calculate and return an array of the offsets to start and end highlighting
-of a string; the return value will be of the form:
+of the string returned by C<as_text>; the return value will be of the form:
 
     [
-        $string, 
-        [ "Foo", $foo_start, $foo_end ]
-        [ "Bar", $bar_start, $bar_end ]
+        [ "foo", $foo_start, $foo_end ]
+        [ "bar", $bar_start, $bar_end ]
     ] 
 
-Note that this also calculates a "representative" string which contains
-the given search terms. If there's lots and lots of context between the
-terms, it's replaced with an ellipsis.
+Note: Previous versions of C<Text::Context> lumped C<as_text> and
+C<offsets> into one data structure. Hence, code which uses old versions
+will need to be updated.
 
 =cut
 
@@ -92,16 +114,11 @@ sub offsets {
 	# Have we done this before?
 	return $self->{offsets} if exists $self->{offsets};
 	return undef unless $self->keywords;
+    
+    my $context = $self->as_text;
+    return undef unless $context;
 
-	my @msg = split /\n/, $self->{text};
-
-	my ($sparse, $in_order) = _locate_keywords(\@msg, $self->keywords);
-
-	return undef unless @$in_order;    # Didn't find any keywords at all.
-
-	my $context = _present($sparse, @$in_order);
-
-	return $self->{offsets} = _make_offsets($context, @$in_order);
+	return $self->{offsets} = _make_offsets($context, @{$self->{in_order}});
 }
 
 sub _locate_keywords {
@@ -113,7 +130,7 @@ sub _locate_keywords {
 	# message, followed by an array reference of the keywords in-order.
 
 	my @msg = @{ shift @_ };
-	my %to_find = map { lc $_ => $_ } @_;
+	my %to_find = map { $_ => 1 } @_;
 	my @in_order;
 	my @text;
 
@@ -129,9 +146,9 @@ sub _locate_keywords {
 				if ($text[$line_no]) {
 
 					# We have already found one word on this line.
-					push @{ $text[$line_no] }, $to_find{$word};
+					push @{ $text[$line_no] }, $word;
 				} else {
-					$text[$line_no] = [ $line, $to_find{$word} ];
+					$text[$line_no] = [ $line, $word ];
 				}
 				push @in_order, $word;
 				delete $to_find{$word};
@@ -177,12 +194,9 @@ sub _shorten {
 
 	# First, let's see if we can slim it down by *just* trying to find
 	# the words (with maybe one word either side)
-	my $pat = join ".?", map quotemeta, @words;
+	my $pat = join '\b.+?\b', map quotemeta, @words;
 	$line =~ /((\b\w+\b)?.*?$pat.*?(\b\w+\b)?)/smi;
-	die "Assertion failed! We found it once, but now it is gone! "
-		. "/$pat/ in q|$line|"
-		unless $1;
-	return $1 if length $1 < MAX_CONTEXT_LENGTH;
+	return $1 if $1 and length $1 < MAX_CONTEXT_LENGTH;
 
 	# So there's too much stuff *between* the words; so get a per-word context
 	for my $n (WORDS_EITHER_SIDE .. 2) {
@@ -215,7 +229,7 @@ sub _make_offsets {
     # But wait - they're not quite in order, because if the same 
     # line contains two search terms, the one given first will win.
 
-	return [$string, sort { $a->[1] <=> $b->[1] } @ret ];
+	return [sort { $a->[1] <=> $b->[1] } @ret ];
 }
 
 =head2 as_html([ start => "<some tag>", end => "<some end tag>" ])
@@ -237,7 +251,8 @@ sub as_html {
 	return unless $offset_r;
 
 	my @offsets = @$offset_r;       # Use a copy so we don't modify orig.
-	my $string  = shift @offsets;
+	my $string  = $self->as_text();
+    return unless $string;
 
 	my $pos = 0;
 	my $out;

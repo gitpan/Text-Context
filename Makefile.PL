@@ -2,6 +2,8 @@ use 5.006;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
+warn "The 2.0 release of this module contains incompatible API changes!
+Please read the documentation for the as_text method!\n";
 WriteMakefile(
     'NAME'		=> 'Text::Context',
     'VERSION_FROM'	=> 'Context.pm', # finds $VERSION
