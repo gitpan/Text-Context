@@ -2,7 +2,7 @@ package Text::Context;
 use strict;
 use warnings;
 
-our $VERSION = "3.1";
+our $VERSION = "3.2";
 
 =head1 NAME
 
@@ -239,7 +239,7 @@ sub new {
 
 sub best_keywords { 
     my $self = shift;
-    return @{$self->{scoretable}->[-1]};
+    return @{$self->{scoretable}->[-1] || []};
 }
 
 sub slim {
