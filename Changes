@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Context.
 
+1.2   Mon Dec  9 16:41:24 GMT 2002
+    - Revert to using regexes to avoid finding non-whole-word matches.
+
 1.1   Mon Dec  9 16:23:52 2002
     - order and case of search terms is no longer significant.
     - fixed documentation bug (old text, still referred to "mail object")

@@ -8,7 +8,7 @@ use constant DEFAULT_HTML_HIGHLIGHT_END   => '</span class="quoted">';
 
 use HTML::Entities;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 
 =head1 NAME
 
@@ -125,7 +125,7 @@ sub _locate_keywords {
         my $lline = lc $line;
 
 		for my $word (keys %to_find) {
-			if (index($lline, $word) > -1) {    # (Faster than regex)
+			if ($lline =~ /\b\Q$word\E\b/) { 
 				if ($text[$line_no]) {
 
 					# We have already found one word on this line.
@@ -202,14 +202,14 @@ sub _make_offsets {
 	# the offsets.
 
 	my $string   = shift;
-    my $lstring  = lc $string;
 	my @in_order = @_;
 	my @ret;
 
 	# Now calculate the offsets.
 	for (@in_order) {
-		my $pos = index($lstring, lc $_);
-		push @ret, [ $_, $pos, $pos + length ];
+        $string =~ /\b\Q$_\E\b/i;
+        my $pos = length $`;
+		push @ret, [ $_, $pos, $pos+length];
 	}
 
     # But wait - they're not quite in order, because if the same 
