@@ -1,10 +1,10 @@
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
+
 WriteMakefile(
     'NAME'		=> 'Text::Context',
-    'VERSION_FROM'	=> 'Context.pm', # finds $VERSION
+    'VERSION_FROM'	=> 'lib/Text/Context.pm', 
     'PREREQ_PM'		=> {
-        Text::Context::EitherSide => 1.1
-    }, # e.g., Module::Name => 1.1
+        'Text::Context::EitherSide' => 1.1,
+        'UNIVERSAL::require'        => 0.03,
+    },
 );

@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Context.
 
+3.5  Fri Oct 22 16:34:16 UTC 2004
+    - Tony Bowden is now maintainer
+    - split Text::Context::Para to its own file
+    - auto-require the Paragraph class
+
 3.4  Sat May  1 11:57:17 2004
     - Add dependency
 
