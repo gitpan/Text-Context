@@ -2,7 +2,7 @@ package Text::Context;
 use strict;
 use warnings;
 
-our $VERSION = "3.4";
+our $VERSION = "3.5";
 
 =head1 NAME
 
@@ -61,7 +61,7 @@ Turns the text into a set of Text::Context::Para objects, collapsing
 multiple spaces in the text and feeding the paragraphs, in order, onto
 the C<text_a> member.
 
-=end
+=end maintainance
 
 =cut
 
@@ -93,7 +93,7 @@ instance, given "a", "b" and "c", we want to produce
 We do this by counting in binary, and then mapping the counts onto
 keywords.
 
-=end
+=end maintainance
 
 =cut
 
@@ -111,7 +111,7 @@ sub permute_keywords {
     return reverse @permutation;
 }
 
-=for maintainance
+=begin maintainance
 
 Now we want to find a "score" for this paragraph, finding the best set
 of keywords which "apply" to it. We favour keyword sets which have a
@@ -119,6 +119,8 @@ large number of matches (obviously a paragraph is better if it matches
 "a" and "c" than if it just matches "a") and with multi-word keywords.
 (A paragraph which matches "fresh cheese sandwiches" en bloc is worth
 picking out, even if it has no other matches.)
+
+=end maintainance
 
 =cut
 
@@ -195,7 +197,7 @@ sub paras {
     return map {$_->slim($max_len/@paras)} $self->get_appropriate_paras;
 }
 
-=head2 as_text
+=head2 as_text([ max_len => 100])
 
 Calculates a "representative" string which contains
 the given search terms. If there's lots and lots of context between the
@@ -203,12 +205,16 @@ terms, it's replaced with an ellipsis.
 
 =cut
 
-sub as_text { return join " ... ", map {$_->as_text} $_[0]->paras; }
+sub as_text { 
+   my $self = shift;
+   my %args = @_;
+   return join " ... ", map {$_->as_text} $self->paras($args{max_len}); 
+}
 
-=head2 as_html([ start => "<some tag>", end => "<some end tag>" ])
+=head2 as_html([ start => "<some tag>", end => "<some end tag>", max_len => 100 ])
 
 Markup the snippet as a HTML string using the specified delimiters or
-with a default set of delimiters (C<E<lt>span class="quoted"E<gt>>).
+with a default set of delimiters (C<E<lt>span class="quoted"E<gt>> and C<E<lt>/spanE<gt>>).
 
 =cut
 
@@ -216,8 +222,8 @@ sub as_html {
     my $self = shift;
     my %args = @_;
 
-    my ($start, $end) = @args{qw(start end)};
-    return join " ... ", map {$_->marked_up($start, $end)} $self->paras;
+    my ($start, $end, $max_len) = @args{qw(start end max_len)};
+    return join " ... ", map {$_->marked_up($start, $end)} $self->paras($max_len);
 }
 
 package Text::Context::Para;
