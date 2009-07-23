@@ -5,7 +5,7 @@ use warnings;
 
 use UNIVERSAL::require;
 
-our $VERSION = "3.6";
+our $VERSION = "3.7";
 
 =head1 NAME
 

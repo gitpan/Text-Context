@@ -6,5 +6,6 @@ WriteMakefile(
     'PREREQ_PM'		=> {
         'Text::Context::EitherSide' => 1.1,
         'UNIVERSAL::require'        => 0.03,
+        'HTML::Entities'            => 0,
     },
 );

@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Context.
 
+3.7  Thu Jul 23 11:08:38 EEST 2009
+    - Add dependency on HTML::Entities (Jonathan Yu)
+
 3.6  Tue Sep  6 21:51:11 UTC 2005
     - Doc changes
 
